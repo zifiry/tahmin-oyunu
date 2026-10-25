@@ -72,7 +72,6 @@
     width:34px;height:40px;display:grid;place-items:center;border-radius:9px;
     background:#0f1220;border:1px solid var(--line);font-weight:700;font-size:1.15rem;
   }
-  .rakam.ok{background:rgba(74,222,128,.15);border-color:var(--good);color:var(--good)}
   .skor{font-size:.9rem;color:var(--muted);white-space:nowrap}
   .skor b{color:var(--text)}
   .bos{color:var(--muted);font-size:.9rem;padding:6px 0}
@@ -92,10 +91,11 @@
 
   /* --- Karakter: Rüzgâr --- */
   #karakter{
-    position:fixed;left:0;top:0;z-index:5;pointer-events:none;
+    position:fixed;left:0;top:0;z-index:1;pointer-events:none;
     width:72px;height:88px;will-change:transform;
-    transition:transform 3s cubic-bezier(.45,.05,.35,1);
+    transition:transform 2.2s cubic-bezier(.45,.05,.35,1);
   }
+  #karakter.hop{z-index:30}
   #karakter .yon{width:100%;height:100%;transition:transform .25s ease}
   #karakter svg{width:100%;height:100%;overflow:visible;animation:ziplama .45s ease-in-out infinite alternate}
   #karakter .scarf{transform-box:fill-box;transform-origin:100% 50%;animation:dalga .35s ease-in-out infinite alternate}
@@ -117,9 +117,6 @@
     0%{transform:translateY(0) rotate(0)}
     40%{transform:translateY(-46px) rotate(-14deg)}
     100%{transform:translateY(0) rotate(0)}
-  }
-  @media (prefers-reduced-motion:reduce){
-    #karakter,#karakter *{animation:none!important;transition:none!important}
   }
 </style>
 </head>
@@ -222,7 +219,7 @@
     r.className = 'rakamlar';
     for (var i = 0; i < 4; i++){
       var s = document.createElement('span');
-      s.className = 'rakam' + (tahmin[i] === hedef[i] ? ' ok' : '');
+      s.className = 'rakam';
       s.textContent = tahmin[i];
       r.appendChild(s);
     }
@@ -372,13 +369,22 @@
   var kar = $('karakter');
   var yonEl = kar.querySelector('.yon');
   var kx = 40, ky = 120;
-  var azHareket = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   function konumla(x, y){ kar.style.transform = 'translate(' + x + 'px,' + y + 'px)'; }
   function gez(){
     var w = window.innerWidth, h = window.innerHeight;
     var nx = Math.random() * Math.max(10, w - 90);
     var ny = Math.random() * Math.max(10, h - 110);
+    // Ekranın iki yanında boş yer varsa çoğunlukla orada dolaş
+    var m = document.querySelector('main').getBoundingClientRect();
+    var sol = m.left, sag = w - m.right;
+    var yanlar = [];
+    if (sol >= 110) yanlar.push([10, sol - 80]);
+    if (sag >= 110) yanlar.push([m.right + 10, w - 80]);
+    if (yanlar.length && Math.random() < 0.75){
+      var y = yanlar[Math.floor(Math.random() * yanlar.length)];
+      nx = y[0] + Math.random() * Math.max(0, y[1] - y[0]);
+    }
     yonEl.style.transform = 'scaleX(' + (nx >= kx ? 1 : -1) + ')';
     kx = nx; ky = ny;
     konumla(nx, ny);
@@ -390,10 +396,8 @@
     setTimeout(function(){ kar.classList.remove('hop'); }, 800);
   }
   konumla(kx, ky);
-  if (!azHareket){
-    setTimeout(gez, 300);
-    setInterval(gez, 3200);
-  }
+  setTimeout(gez, 300);
+  setInterval(gez, 2400);
 
   /* ---------- Olaylar ---------- */
   $('baslat').addEventListener('click', oyunuBaslat);
